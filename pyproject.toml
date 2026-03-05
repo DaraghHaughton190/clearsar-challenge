@@ -1,0 +1,13 @@
+[project]
+name = "clearsar-challenge"
+version = "0.1.0"
+description = "My code for the ClearSAR"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "eotdl>=2025.4.2",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "pillow>=12.1.1",
+    "stac-geoparquet>=0.7.0",
+]
