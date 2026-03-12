@@ -1,7 +1,7 @@
 [project]
 name = "clearsar-challenge"
 version = "0.1.0"
-description = "My code for the ClearSAR"
+description = "My code for the ClearSAR challenge"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -9,6 +9,9 @@ dependencies = [
     "jupyter>=1.1.1",
     "matplotlib>=3.10.8",
     "pillow>=12.1.1",
+    "pycocotools>=2.0.11",
     "scikit-learn>=1.8.0",
     "stac-geoparquet>=0.7.0",
+    "torch>=2.10.0",
+    "ultralytics>=8.4.21",
 ]
