@@ -15,7 +15,7 @@ def main():
       parser.add_argument("-annotations-path", required=True,
                           help="Path the instances_train.json file")
       parser.add_argument("-data-output-dir", required=True,
-                          help="Directory where to created the txt files for YOLO")
+                          help="Directory where to create the txt files for Ultralytics")
       args = parser.parse_args()
       
       # extract paths
