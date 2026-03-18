@@ -8,6 +8,7 @@ dependencies = [
     "eotdl>=2025.4.2",
     "jupyter>=1.1.1",
     "matplotlib>=3.10.8",
+    "mlflow>=3.10.1",
     "pillow>=12.1.1",
     "pycocotools>=2.0.11",
     "scikit-learn>=1.8.0",

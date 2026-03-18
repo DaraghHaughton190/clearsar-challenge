@@ -16,3 +16,5 @@ output/
 submissions/
 runs/
 *.pt
+mlflow.db
+validation/
