@@ -18,3 +18,4 @@ runs/
 *.pt
 mlflow.db
 validation/
+configs/dataset_fold*.yaml
