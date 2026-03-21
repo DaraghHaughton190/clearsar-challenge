@@ -16,12 +16,8 @@ def main():
                           help="Path to dataset.yaml")
       parser.add_argument("-model", type=str, default="yolo11n.pt",
                           help="YOLO architecture to use (defautl: YOLO 11 nano)")
-      parser.add_argument("-epochs", required=True, type=int,
-                          help="Number of training epochs")
-      parser.add_argument('-imgsz', type=int, default=640,
-                          help="Resolution that Ultralytics will use to resize the images")
-      parser.add_argument("-batch", type=int, default=16,
-                          help="Batch size (default: 16)")
+      parser.add_argument("-train_config", type=str, required=True,
+                    help="Path to training config YAML")
       parser.add_argument("-project", default="experiments", type=str,
                           help="Project name")
       parser.add_argument("-run_name", required=True, type=str,
@@ -39,19 +35,15 @@ def main():
       with mlflow.start_run(run_name=args.run_name):
             mlflow.log_params({
                   "model": args.model,
-                  "epochs": args.epochs,
-                  "imgsz": args.imgsz,
-                  "batch": args.batch,
+                  "train_config": args.train_config,
                   "data_config": args.data_config,
                   "seed": args.seed
             })
-
+            
             model = YOLO(args.model)
             model.train(
+                  cfg=args.train_config,
                   data=Path(args.data_config),
-                  epochs=args.epochs,
-                  imgsz=args.imgsz,
-                  batch=args.batch,
                   project=args.project,
                   name=args.run_name
             )
