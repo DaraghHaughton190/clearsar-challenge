@@ -1,0 +1,13 @@
+epochs: 100
+batch: 16
+imgsz: 640
+
+# augmentation
+mosaic: 0.0
+hsv_s: 0.0
+hsv_v: 0.0
+auto_augment: false
+erasing: 0.0
+flipud: 0.0
+fliplr: 0.5
+scale: 0.5
