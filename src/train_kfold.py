@@ -64,6 +64,8 @@ def main():
       parser = argparse.ArgumentParser()
       parser.add_argument("-model", type=str, default="yolo11s.pt",
                               help="Model to train")
+      parser.add_argument("-weights", type=str, default=None,
+                          help="Pretrained weights to load (optional)")
       parser.add_argument("-data_config", type=str, required=True,
                               help="Path to base dataset.yaml")
       parser.add_argument("-train_config", type=str, required=True,
@@ -135,7 +137,11 @@ def main():
                         })
 
                   # train
-                  model = YOLO(args.model)
+                  if args.weights:
+                        model = YOLO(args.model).load(args.weights)
+                  else:
+                        model = YOLO(args.model)
+                  
                   model.train(
                         cfg=args.train_config,
                         data=fold_yaml,
