@@ -5,6 +5,7 @@ description = "My code for the ClearSAR challenge"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "ensemble-boxes>=1.0.9",
     "eotdl>=2025.4.2",
     "jupyter>=1.1.1",
     "matplotlib>=3.10.8",
