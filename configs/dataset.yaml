@@ -1,4 +1,4 @@
-path: /home/francesco/clearsar-challenge/data/ClearSAR/data
+path: /your/path/to/ClearSAR/data
 train: images/train
 val: images/val
 nc: 1
