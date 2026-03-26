@@ -60,6 +60,28 @@ def write_fold_dataset_yaml(data_config: str, fold: int) -> str:
       return str(fold_yaml_path)
 
 
+def make_epoch_callback(run_id: str):
+      """Return a callback that logs per-epoch metrics to mlflow
+      """
+      def on_fit_epoch_end(trainer):
+            if not trainer.metrics:
+                  return
+            epoch = trainer.epoch
+            metrics = {
+                  "train/box_loss":   float(trainer.loss_items[0]) if trainer.loss_items is not None else 0.0,
+                  "train/cls_loss":   float(trainer.loss_items[1]) if trainer.loss_items is not None else 0.0,
+                  "train/dfl_loss":   float(trainer.loss_items[2]) if trainer.loss_items is not None else 0.0,
+                  "val/precision":    float(trainer.metrics.get("metrics/precision(B)", 0.0)),
+                  "val/recall":       float(trainer.metrics.get("metrics/recall(B)", 0.0)),
+                  "val/mAP50":        float(trainer.metrics.get("metrics/mAP50(B)", 0.0)),
+                  "val/mAP50-95":     float(trainer.metrics.get("metrics/mAP50-95(B)", 0.0)),
+            }
+            with mlflow.start_run(run_id=run_id, nested=True):
+                  mlflow.log_metrics(metrics, step=epoch)
+            
+      return on_fit_epoch_end
+
+
 def main():
       parser = argparse.ArgumentParser()
       parser.add_argument("-model", type=str, default="yolo11s.pt",
@@ -129,52 +151,54 @@ def main():
                   # write fold-specific dataset yaml
                   fold_yaml = write_fold_dataset_yaml(args.data_config, fold)
 
-                  with mlflow.start_run(run_name=fold_run_name, nested=True):
-                        mlflow.log_params({
-                              "fold": fold,
-                              "model": args.model,
-                              "train_config": args.train_config,
-                        })
-
                   # train
                   if args.weights:
                         model = YOLO(args.model).load(args.weights)
                   else:
                         model = YOLO(args.model)
                   
-                  model.train(
-                        cfg=args.train_config,
-                        data=fold_yaml,
-                        project=args.project,
-                        name=fold_run_name,
-                        exist_ok=True
-                  )
-
-                  # predict on val set
-                  # best_pt = Path(args.project) / fold_run_name / "weights" / "best.pt"
-                  best_pt = Path("runs/detect") / args.project / fold_run_name / "weights" / "best.pt"
-                  pred_path = f"validation/{fold_run_name}.json"
-                  run_predict(str(best_pt), str(images_val_dir),
-                              pred_path, conf=0.25)
-
-                  # evaluate with pycocotools
-                  metrics = evaluate(args.ann_path, pred_path)
-                  fold_maps.append(metrics["mAP"])
-
-                  mlflow.log_metrics({
-                        "mAP":        metrics["mAP"],
-                        "mAP50":      metrics["mAP50"],
-                        "mAP75":      metrics["mAP75"],
-                        "mAP_small":  metrics["mAP_small"],
-                        "mAP_medium": metrics["mAP_medium"],
-                        "mAP_large":  metrics["mAP_large"],
-                  })
-
-                  print(f"Fold {fold} pycocotools mAP: {metrics['mAP']:.4f}")
+                  with mlflow.start_run(run_name=fold_run_name, nested=True) as fold_run:
+                        model.add_callback("on_fit_epoch_end", 
+                                           make_epoch_callback(fold_run.info.run_id))
+                        mlflow.log_params({
+                              "fold": fold,
+                              "model": args.model,
+                              "train_config": args.train_config,
+                        })
                   
-                  del model
-                  torch.cuda.empty_cache()
-                  gc.collect()
+                        model.train(
+                              cfg=args.train_config,
+                              data=fold_yaml,
+                              project=args.project,
+                              name=fold_run_name,
+                              exist_ok=True
+                        )
+
+                        # predict on val set
+                        # best_pt = Path(args.project) / fold_run_name / "weights" / "best.pt"
+                        best_pt = Path("runs/detect") / args.project / fold_run_name / "weights" / "best.pt"
+                        pred_path = f"validation/{fold_run_name}.json"
+                        run_predict(str(best_pt), str(images_val_dir),
+                                    pred_path, conf=0.25)
+
+                        # evaluate with pycocotools
+                        metrics = evaluate(args.ann_path, pred_path)
+                        fold_maps.append(metrics["mAP"])
+
+                        mlflow.log_metrics({
+                              "mAP":        metrics["mAP"],
+                              "mAP50":      metrics["mAP50"],
+                              "mAP75":      metrics["mAP75"],
+                              "mAP_small":  metrics["mAP_small"],
+                              "mAP_medium": metrics["mAP_medium"],
+                              "mAP_large":  metrics["mAP_large"],
+                        })
+
+                        print(f"Fold {fold} pycocotools mAP: {metrics['mAP']:.4f}")
+                        
+                        del model
+                        torch.cuda.empty_cache()
+                        gc.collect()
 
             # log average across folds to parent run
             avg_map = sum(fold_maps) / len(fold_maps)

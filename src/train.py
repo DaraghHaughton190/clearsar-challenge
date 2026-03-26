@@ -10,6 +10,29 @@ from pathlib import Path
 from utils.seed_everything import seed_everything
 from ultralytics import YOLO
 
+
+def make_epoch_callback(run_id: str):
+      """Return a callback that logs per-epoch metrics to mlflow
+      """
+      def on_fit_epoch_end(trainer):
+            if not trainer.metrics:
+                  return
+            epoch = trainer.epoch
+            metrics = {
+                  "train/box_loss":   float(trainer.loss_items[0]) if trainer.loss_items is not None else 0.0,
+                  "train/cls_loss":   float(trainer.loss_items[1]) if trainer.loss_items is not None else 0.0,
+                  "train/dfl_loss":   float(trainer.loss_items[2]) if trainer.loss_items is not None else 0.0,
+                  "val/precision":    float(trainer.metrics.get("metrics/precision(B)", 0.0)),
+                  "val/recall":       float(trainer.metrics.get("metrics/recall(B)", 0.0)),
+                  "val/mAP50":        float(trainer.metrics.get("metrics/mAP50(B)", 0.0)),
+                  "val/mAP50-95":     float(trainer.metrics.get("metrics/mAP50-95(B)", 0.0)),
+            }
+            with mlflow.start_run(run_id=run_id, nested=True):
+                  mlflow.log_metrics(metrics, step=epoch)
+            
+      return on_fit_epoch_end
+
+
 def main():
       parser = argparse.ArgumentParser()
       parser.add_argument('-data_config', type=str, required=True,
@@ -34,7 +57,7 @@ def main():
       mlflow.set_tracking_uri("runs/mlflow")
       mlflow.set_experiment(args.project)
             
-      with mlflow.start_run(run_name=args.run_name):
+      with mlflow.start_run(run_name=args.run_name) as run:
             mlflow.log_params({
                   "model": args.model,
                   "train_config": args.train_config,
@@ -47,6 +70,9 @@ def main():
             else:
                   model = YOLO(args.model)
                   
+            model.add_callback("on_fit_epoch_end",
+                       make_epoch_callback(run.info.run_id))
+            
             model.train(
                   cfg=args.train_config,
                   data=Path(args.data_config),
