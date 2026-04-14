@@ -12,6 +12,7 @@ wheels/
 
 # other stuff from the project
 data/
+configs/
 output/
 submissions/
 runs/
