@@ -82,6 +82,29 @@ def make_epoch_callback(run_id: str):
       return on_fit_epoch_end
 
 
+def patch_albumentations():
+      """Method to monkey-patch parameters for custom transforms
+      """
+      from ultralytics.data.augment import Albumentations
+      
+      def custom_init(self, p=1.0, **kwargs):
+            self.p = p
+            self.transform = None
+            try:
+                  import albumentations as A
+                  T = [
+                        A.RandomBrightnessContrast(brightness_limit=0.2, 
+                                                   contrast_limit=0.2, 
+                                                   p=0.3),
+                  ]
+                  self.transform = A.Compose(T)
+                  self.contains_spatial = False
+            except Exception as e:
+                  print(f"Albumentations patch failed: {e}")
+      
+      Albumentations.__init__ = custom_init
+
+
 def main():
       parser = argparse.ArgumentParser()
       parser.add_argument("-model", type=str, default="yolo11s.pt",
@@ -110,9 +133,15 @@ def main():
                               help="Parent run name")
       parser.add_argument("-seed", type=int, default=96,
                               help="Random seed")
+      parser.add_argument("--no-deterministic", dest="deterministic", 
+                    action="store_false",
+                    help="Disable cudnn deterministic mode (required for RT-DETR)")
+      parser.add_argument("-num_folds", type=int, default=None,
+                    help="Number of folds to run (default: all folds)")
+      parser.set_defaults(deterministic=True)
       args = parser.parse_args()
 
-      seed_everything(args.seed)
+      seed_everything(args.seed, deterministic=args.deterministic)
 
       images_train_dir = Path(args.images_train_dir).resolve()
       labels_train_dir = Path(args.labels_train_dir).resolve()
@@ -135,8 +164,9 @@ def main():
                   "seed": args.seed,
                   "n_folds": len(folds)
             })
-
-            for fold in range(len(folds)):
+            
+            n = args.num_folds if args.num_folds is not None else len(folds)
+            for fold in range(n):
                   fold_run_name = f"{args.run_name}_fold{fold}"
                   print(f"\n{'='*50}")
                   print(f"Starting fold {fold}")
@@ -165,7 +195,10 @@ def main():
                               "model": args.model,
                               "train_config": args.train_config,
                         })
-                  
+
+                        # call the monkey-patch method for data aug
+                        patch_albumentations()
+                        
                         model.train(
                               cfg=args.train_config,
                               data=fold_yaml,
