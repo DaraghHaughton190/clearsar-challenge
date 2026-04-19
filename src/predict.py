@@ -12,11 +12,13 @@ from ultralytics import YOLO
 
 
 def run_predict(checkpoint: str, images_dir: str, 
-                output_path: str, conf: float = 0.25) -> list:
+                output_path: str, conf: float = 0.25,
+                imgsz: int = 640) -> list:
       model = YOLO(str(checkpoint))
       results = model.predict(
             source=str(images_dir),
             conf=conf,
+            imgsz=imgsz,
             verbose=False,
       )
       
@@ -56,12 +58,15 @@ def main():
                           help="Path for output JSON")
       parser.add_argument("-conf", type=float, default=0.25,
                           help="Confidence threshold for detections (default: 0.25)")
+      parser.add_argument("-imgsz", type=int, default=640,
+                    help="Inference image size (default: 640)")
       args = parser.parse_args()
       
       detections = run_predict(checkpoint=args.checkpoint,
                                images_dir=args.images_dir,
                                output_path=args.output,
-                               conf=args.conf)
+                               conf=args.conf,
+                               imgsz=args.imgsz)
       
       print(f"Saved {len(detections)} detections to {args.output}")
       

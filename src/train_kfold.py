@@ -136,8 +136,12 @@ def main():
       parser.add_argument("--no-deterministic", dest="deterministic", 
                     action="store_false",
                     help="Disable cudnn deterministic mode (required for RT-DETR)")
+      parser.add_argument("-imgsz", type=int, default=640,
+                    help="Inference image size for validation (default: 640)")
       parser.add_argument("-num_folds", type=int, default=None,
                     help="Number of folds to run (default: all folds)")
+      parser.add_argument("-start_fold", type=int, default=0,
+                    help="Fold to start from (default: 0)")
       parser.set_defaults(deterministic=True)
       args = parser.parse_args()
 
@@ -162,11 +166,12 @@ def main():
                   "train_config": args.train_config,
                   "data_config": args.data_config,
                   "seed": args.seed,
-                  "n_folds": len(folds)
+                  "n_folds": len(folds),
+                  "imgsz": args.imgsz
             })
             
-            n = args.num_folds if args.num_folds is not None else len(folds)
-            for fold in range(n):
+            n = args.start_fold + (args.num_folds if args.num_folds is not None else len(folds))
+            for fold in range(args.start_fold, n):
                   fold_run_name = f"{args.run_name}_fold{fold}"
                   print(f"\n{'='*50}")
                   print(f"Starting fold {fold}")
@@ -208,11 +213,10 @@ def main():
                         )
 
                         # predict on val set
-                        # best_pt = Path(args.project) / fold_run_name / "weights" / "best.pt"
                         best_pt = Path("runs/detect") / args.project / fold_run_name / "weights" / "best.pt"
                         pred_path = f"validation/{fold_run_name}.json"
                         run_predict(str(best_pt), str(images_val_dir),
-                                    pred_path, conf=0.25)
+                                    pred_path, conf=0.25, imgsz=args.imgsz)
 
                         # evaluate with pycocotools
                         metrics = evaluate(args.ann_path, pred_path)
