@@ -49,16 +49,38 @@ def prepare_fold(folds: dict, fold: int,
                   dst_lbl.symlink_to(src_lbl)
 
 
-def write_fold_dataset_yaml(data_config: str, fold: int) -> str:
-      """Write a dataset yaml for the given fold, returns path
+def write_fold_train_txt(folds: dict, fold: int,
+                         images_train_dir: Path, output_dir: Path) -> Path:
+      """Write a txt file disting paths of train split images
+      for this fold.
+      """
+      output_dir.mkdir(parents=True, exist_ok=True)
+      txt_path = output_dir / f"fold{fold}_train.txt"
+      train_ids = folds[str(fold)]["train"]
+      
+      with open(txt_path, "w") as f:
+            for img_id in train_ids:
+                  f.write(str(images_train_dir / f"{img_id}.png") + "\n")
+      
+      return txt_path
+ 
+
+def write_fold_dataset_yaml(data_config: str, fold: int, train_txt_path: Path) -> str:
+      """Write a dataset yaml for the given fold with train pointing to the fold txt file.
       """
       with open(data_config) as f:
             content = f.read()
+      
+      content = content.replace(
+            [l for l in content.splitlines() if l.startswith("train:")][0],
+            f"train: {train_txt_path.resolve()}"
+      )
       fold_yaml_path = Path(data_config).parent / f"dataset_fold{fold}.yaml"
+      
       with open(fold_yaml_path, "w") as f:
             f.write(content)
+            
       return str(fold_yaml_path)
-
 
 def make_epoch_callback(run_id: str):
       """Return a callback that logs per-epoch metrics to mlflow
@@ -182,9 +204,12 @@ def main():
                   prepare_fold(folds, fold,
                               images_train_dir, labels_train_dir,
                               images_val_dir, labels_val_dir)
+                  
+                  train_txt = write_fold_train_txt(folds, fold, images_train_dir,
+                                  Path("data/splits"))
 
                   # write fold-specific dataset yaml
-                  fold_yaml = write_fold_dataset_yaml(args.data_config, fold)
+                  fold_yaml = write_fold_dataset_yaml(args.data_config, fold, train_txt)
 
                   # train
                   if args.weights:
@@ -219,7 +244,8 @@ def main():
                                     pred_path, conf=0.25, imgsz=args.imgsz)
 
                         # evaluate with pycocotools
-                        metrics = evaluate(args.ann_path, pred_path)
+                        val_ids = folds[str(fold)]["val"]
+                        metrics = evaluate(args.ann_path, pred_path, img_ids=val_ids)
                         fold_maps.append(metrics["mAP"])
 
                         mlflow.log_metrics({
