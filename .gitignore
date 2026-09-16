@@ -20,3 +20,8 @@ runs/
 mlflow.db
 validation/
 configs/dataset_fold*.yaml
+
+# Ignore data and parquet files
+ClearSAR_Dataset/data/
+*.parquet
+*.parqet
