@@ -118,9 +118,24 @@ def patch_albumentations():
                         A.RandomBrightnessContrast(brightness_limit=0.2, 
                                                    contrast_limit=0.2, 
                                                    p=0.3),
+
+                        A.GaussianBlur(blur_limit=(3, 5), p =0.2),
+
+                        A.CoarseDropout(num_holes_range= (1, 8), hole_height_range= (0, 32), hole_width_range=(0, 32), p=0.1),
+
+                        A.GaussNoise(std_range=(0.01, 0.05), p = 0.2)
                   ]
                   self.transform = A.Compose(T)
                   self.contains_spatial = False
+
+                  if mlflow.active_run():
+                        flattened_params = {}
+
+                        for tran in T:
+                              name = f"albu_{tran.__class__.__name__}"
+                              flattened_params[f"{name}_p"] = tran.p
+                        mlflow.log_params(flattened_params)
+                        
             except Exception as e:
                   print(f"Albumentations patch failed: {e}")
       
@@ -224,6 +239,7 @@ def main():
                               "fold": fold,
                               "model": args.model,
                               "train_config": args.train_config,
+                              
                         })
 
                         # call the monkey-patch method for data aug
