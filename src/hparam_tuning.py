@@ -4,22 +4,29 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torch.nn as nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
-from ultralytics import YOLO
+from ultralytics import YOLO, RTDETR
 from utils.seed_everything import seed_everything
 
 
 def get_data_loaders(batch_size):
     return [None], [None]
 
-def model_loader(model_name: str, num_classes: int) -> nn.Module:
-    seed_everything(seed=42, deterministic=True)
+def model_loader(model_name: str) -> nn.Module:
     #if model_name == "faster_rcnn":
     #    model = fasterrcnn_resnet50_fpn(pretrained=True)
     #    return model
     # for eventaully integrating FRCNN:
     # https://docs.pytorch.org/tutorials/intermediate/torchvision_tutorial.html
 
+    # NOTE: THESE MODELS ARE PRETRAINED ON THE COCO DATASET!!!
+    if model_name == "RT-DETR":
+        seed_everything(seed=42, deterministic=False)
+        model = RTDETR("rtdetr-l.pt")
+
+        return model
+
     if model_name == "YOLO":
+        seed_everything(seed=42, deterministic=True)
         model = YOLO("yolov8n.pt")
         return model
 
@@ -27,37 +34,35 @@ def model_loader(model_name: str, num_classes: int) -> nn.Module:
         raise ValueError("Unsupported model type")
     
 def objective(trial):
-    lr = trial.suggest_float("lr", 1e-5, 1e-2, log = True)
     batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
-    model_choice = trial.suggest_categorical("model_name", ["YOLO"])
+    model_choice = trial.suggest_categorical("model_name", ["RT-DETR", "YOLO"])
 
-    #train_loader, val_loader = get_data_loaders(batch_size = batch_size)
-    model = model_loader(model_choice, num_classes= 2)
+    box_weight = trial.suggest_float("box", 1, 10, log = True) #bboc loss
+    cls_weight = trial.suggest_float("cls", 0.2, 4, log = True) # classification loss
+    dfl_weight = trial.suggest_float("dlf", 0.2, 4, log = True) # dist-focal loss
 
-    #optimiser = optim.AdamW(model.parameters(), lr=lr)
+    if model_choice  == "RT-DETR":
+        lr = trial.suggest_float("lr", 1e-5, 1e-3, log = True)
 
-    #yolo train data=coco8.yaml model=yolo26n.pt epochs=10 lr0=0.01
+    else:
+        lr = trial.suggest_float("lr", 1e-4, 1e-2, log = True)
 
-    model.train(data = "/home/daragh/clearsar-challenge/configs/dataset.yaml",
-                 lr0 = lr, batch = batch_size, optimizer = "AdamW", epochs = 2, seed=42, 
-                 deterministic = True)
+    model = model_loader(model_choice)
 
-    #for epoch in range(epochs):
-    #    model.train()
-
-    #    for images, targets in train_loader:
-    #        optimiser.zero_grad()
-    #        loss = model(images, targets)
-    #        loss.backward()
-    #        optimiser.step()
+    model.train(data = "configs/dataset.yaml",
+                lr0 = lr,
+                batch = batch_size,
+                box = box_weight,
+                cls = cls_weight,
+                dfl = dfl_weight,
+                optimizer = "AdamW", 
+                epochs = 2, 
+                seed=42)
 
     metrics = model.val()
     val_mAP = metrics.box.map
 
     trial.report(val_mAP)
-
-    #if trial.should_prune():
-    #    raise optuna.TrialPruned()
 
     return val_mAP
 
