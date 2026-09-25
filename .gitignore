@@ -25,3 +25,7 @@ configs/dataset_fold*.yaml
 ClearSAR_Dataset/data/
 *.parquet
 *.parqet
+
+ClearSAR_Dataset/data (Copy)
+
+data.zip

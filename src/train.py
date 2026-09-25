@@ -80,7 +80,7 @@ def main():
                   name=args.run_name
             )
             
-            run_dir = Path("runs/detect") / args.project / args.run_name
+            run_dir = Path(args.project) / args.run_name
             results_csv = run_dir / "results.csv"
             df = pd.read_csv(results_csv)
             df.columns = df.columns.str.strip()
@@ -95,12 +95,12 @@ def main():
                   "best_epoch":    int(best_row["epoch"]),
             })
       
-      # log best checkpoint as artifact
-      best_pt = run_dir / "weights" / "best.pt"
-      if best_pt.exists():
-            mlflow.log_artifact(str(best_pt), artifact_path="weights")
-      else:
-            print(f"Warning: best.pt not found at {best_pt}")
+            # log best checkpoint as artifact
+            best_pt = run_dir / "weights" / "best.pt"
+            if best_pt.exists():
+                  mlflow.log_artifact(str(best_pt), artifact_path="weights")
+            else:
+                  print(f"Warning: best.pt not found at {best_pt}")
 
 
 if __name__ == "__main__":

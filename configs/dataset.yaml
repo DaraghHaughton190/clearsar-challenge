@@ -1,6 +1,6 @@
-path: /your/path/to/ClearSAR/data
-train: images/train
-val: images/val
+path: /home/daragh/clearsar-challenge/ClearSAR_Dataset/data
+train: images/local_train
+val: images/local_val
 nc: 1
 names:
   - RFI
