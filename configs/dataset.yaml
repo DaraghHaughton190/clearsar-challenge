@@ -1,4 +1,4 @@
-path: /home/daragh/clearsar-challenge/ClearSAR_Dataset/data
+path: /home/daragh_haughton_ubotica_com/clearsar-challenge/data/
 train: images/local_train
 val: images/local_val
 nc: 1

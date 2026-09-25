@@ -32,6 +32,17 @@ def model_loader(model_name: str) -> nn.Module:
 
     else:
         raise ValueError("Unsupported model type")
+
+def pruner(trainer):
+    current_map = trainer.fitness
+    epoch = trainer.epoch
+
+    trial.report(current_map, step = epoch)
+
+    if trial.should_prune():
+        raise optuna.TrialPruned()
+
+model.add_callback("on_fit_epoch_end", on_fit_epoch_end)
     
 def objective(trial):
     batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
@@ -62,16 +73,20 @@ def objective(trial):
     metrics = model.val()
     val_mAP = metrics.box.map
 
-    trial.report(val_mAP)
+    trial.report(val_mAP, step= 2)
 
     return val_mAP
 
 if __name__ == "__main__":
     study = optuna.create_study(direction = "maximize",
-                                 #pruner = optuna.pruner.MedianPruner()
+                                 pruner = optuna.pruner.MedianPruner(
+                                    n_startup_trials = 3,
+                                    n_warmup_steps = 5,
+                                    interval_steps =1
+                                 )
                                  )
 
-    study.optimize(objective, n_trials = 20)
+    study.optimize(objective, n_trials = 10)
 
     print("Best trial:", study.best_trial.value)
     print("Best params:", study.best_trial.params)
