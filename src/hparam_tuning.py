@@ -28,7 +28,8 @@ def model_loader(model_name: str) -> nn.Module:
     
 def objective(trial):
     batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
-    model_choice = trial.suggest_categorical("model_name", ["RT-DETR", "YOLO"])
+    #model_choice = trial.suggest_categorical("model_name", ["RT-DETR", "YOLO"])
+    model_choice = trial.suggest_categorical(["YOLO"])
 
     box_weight = trial.suggest_float("box", 1, 10, log = True) #bboc loss
     cls_weight = trial.suggest_float("cls", 0.2, 4, log = True) # classification loss
