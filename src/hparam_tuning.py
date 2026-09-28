@@ -85,7 +85,6 @@ if __name__ == "__main__":
         create_experiment=True
     )
 
-
     study = optuna.create_study(study_name = "SAR_Architecture_Sweep_V2",
                                 direction = "maximize",
                                  pruner = optuna.pruners.MedianPruner(
