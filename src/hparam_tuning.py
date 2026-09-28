@@ -55,6 +55,9 @@ def objective(trial):
 
     model.train(data = "configs/dataset.yaml",
                 lr0 = lr,
+                imgsz = 512,
+                rect = True,
+                mosaic = 0.0,
                 batch = batch_size,
                 box = box_weight,
                 cls = cls_weight,
@@ -79,16 +82,18 @@ if __name__ == "__main__":
     )
 
 
-    study = optuna.create_study(study_name = "SAR_Architecture_Sweep",
+    study = optuna.create_study(study_name = "SAR_Architecture_Sweep_V2",
                                 direction = "maximize",
-                                 pruner = optuna.pruner.MedianPruner(
+                                 pruner = optuna.pruners.MedianPruner(
                                     n_startup_trials = 3,
                                     n_warmup_steps = 5,
                                     interval_steps =1
                                  )
                                  )
 
-    study.optimize(objective, n_trials = 10, callbacks=[mlflc])
+    study.optimize(objective, n_trials = 5, callbacks=[mlflc])
 
     print("Best trial:", study.best_trial.value)
     print("Best params:", study.best_trial.params)
+
+    # view ML flow dash: mlflow ui --host 0.0.0.0 --port 5000
