@@ -18,10 +18,10 @@ def model_loader(model_name: str) -> nn.Module:
         return model
 
     # Not sure how that will effect the YOLO model
-    if model_name == "YOLO":
+    elif model_name.startswith("YOLO"):
         seed_everything(seed=42, deterministic=True)
-        model = YOLO("yolo11n.pt")
-        return model
+        name = f"{model_name.lower()}.pt"
+        return YOLO(name)
 
     else:
         raise ValueError("Unsupported model type")
@@ -29,7 +29,10 @@ def model_loader(model_name: str) -> nn.Module:
 def objective(trial):
     batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
     #model_choice = trial.suggest_categorical("model_name", ["RT-DETR", "YOLO"])
-    model_choice = trial.suggest_categorical(["YOLO"])
+    model_choice = trial.suggest_categorical(
+        "model_name", 
+        ["YOLO11n", "YOLO11s", "YOLO26n", "YOLO26s"]
+    )
 
     box_weight = trial.suggest_float("box", 1, 10, log = True) #bboc loss
     cls_weight = trial.suggest_float("cls", 0.2, 4, log = True) # classification loss
