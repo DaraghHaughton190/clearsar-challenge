@@ -19,7 +19,7 @@ def model_loader(model_name: str) -> nn.Module:
     # Not sure how that will effect the YOLO model
     if model_name == "YOLO":
         seed_everything(seed=42, deterministic=True)
-        model = YOLO("yolov8n.pt")
+        model = YOLO("yolo11n.pt")
         return model
 
     else:
