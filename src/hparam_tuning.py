@@ -6,6 +6,7 @@ import torch.nn as nn
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from ultralytics import YOLO, RTDETR
 from utils.seed_everything import seed_everything
+from optuna.integration.mlflow import MLflowCallback
 
 def model_loader(model_name: str) -> nn.Module:
     # NOTE: THESE MODELS ARE PRETRAINED ON THE COCO DATASET!
@@ -59,7 +60,7 @@ def objective(trial):
                 cls = cls_weight,
                 dfl = dfl_weight,
                 optimizer = "AdamW", 
-                epochs = 2, 
+                epochs = 20, 
                 seed=42)
 
     metrics = model.val()
@@ -70,7 +71,16 @@ def objective(trial):
     return val_mAP
 
 if __name__ == "__main__":
-    study = optuna.create_study(direction = "maximize",
+
+    mlflc = MLflowCallback(
+        tracking_uri="file:./mlruns",
+        metric_name="val_mAP",
+        create_experiment=True
+    )
+
+
+    study = optuna.create_study(study_name = "SAR_Architecture_Sweep",
+                                direction = "maximize",
                                  pruner = optuna.pruner.MedianPruner(
                                     n_startup_trials = 3,
                                     n_warmup_steps = 5,
@@ -78,7 +88,7 @@ if __name__ == "__main__":
                                  )
                                  )
 
-    study.optimize(objective, n_trials = 10)
+    study.optimize(objective, n_trials = 10, callbacks=[mlflc])
 
     print("Best trial:", study.best_trial.value)
     print("Best params:", study.best_trial.params)
