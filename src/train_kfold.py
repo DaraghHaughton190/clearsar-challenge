@@ -119,13 +119,12 @@ def patch_albumentations():
                                                    contrast_limit=0.2, 
                                                    p=0.3),
 
-                        A.GaussianBlur(blur_limit=(3, 5), p =0.2),
-
-                        A.CoarseDropout(num_holes_range= (1, 8), hole_height_range= (0, 32), hole_width_range=(0, 32), p=0.1),
-
                         A.GaussNoise(std_range=(0.01, 0.05), p = 0.2)
                   ]
-                  self.transform = A.Compose(T)
+                  self.transform = A.Compose(
+                                    T, 
+                                    bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])
+                                    )
                   self.contains_spatial = False
 
                   if mlflow.active_run():

@@ -67,7 +67,7 @@ def objective(trial):
                 cls = cls_weight,
                 dfl = dfl_weight,
                 optimizer = "AdamW", 
-                epochs = 20, 
+                epochs = 40, 
                 seed=42)
 
     metrics = model.val()
@@ -85,16 +85,16 @@ if __name__ == "__main__":
         create_experiment=True
     )
 
-    study = optuna.create_study(study_name = "SAR_Architecture_Sweep_V2",
+    study = optuna.create_study(study_name = "SAR_Architecture_Sweep_V3",
                                 direction = "maximize",
                                  pruner = optuna.pruners.MedianPruner(
                                     n_startup_trials = 3,
-                                    n_warmup_steps = 5,
+                                    n_warmup_steps = 3,
                                     interval_steps =1
                                  )
                                  )
 
-    study.optimize(objective, n_trials = 5, callbacks=[mlflc])
+    study.optimize(objective, n_trials = 10, callbacks=[mlflc])
 
     print("Best trial:", study.best_trial.value)
     print("Best params:", study.best_trial.params)
