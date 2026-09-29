@@ -287,3 +287,16 @@ def main():
 
 if __name__ == "__main__":
       main()
+
+
+#python train_kfold.py \
+#  -model yolo11s.pt \
+#  -data_config configs/dataset.yaml \
+#  -train_config configs/train.yaml \
+#  -folds_path data/folds.json \
+#  -images_train_dir data/images/train \
+#  -labels_train_dir data/labels/train \
+#  -images_val_dir data/images/val \
+#  -labels_val_dir data/labels/val \
+#  -ann_path data/annotations/instances_train.json \
+#  -run_name yolo11s_5fold_optuna \

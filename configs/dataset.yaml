@@ -1,6 +1,6 @@
 path: /home/daragh_haughton_ubotica_com/clearsar-challenge/data/
-train: images/local_train
-val: images/local_val
+train: images/train
+val: images/test
 nc: 1
 names:
   - RFI
