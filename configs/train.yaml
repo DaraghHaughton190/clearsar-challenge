@@ -1,11 +1,11 @@
-epochs: 100
-batch: 16
-imgsz: 640
-rect: true
+epochs: 150
+batch: 8
+imgsz: 1024
+rect: false
 mosaic: 0.0
 
 # augmentation
-lr0: 0.0001341
+lr0: 0.01
 box: 1.185
 cls: 0.367
 dfl: 1.559
@@ -17,5 +17,5 @@ hsv_v: 0.0
 auto_augment: false
 erasing: 0.0
 flipud: 0.0
-fliplr: 0.5
+fliplr: 0.0
 scale: 0.2

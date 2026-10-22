@@ -119,12 +119,9 @@ def patch_albumentations():
                                                    contrast_limit=0.2, 
                                                    p=0.3),
 
-                        A.GaussNoise(std_range=(0.01, 0.05), p = 0.2)
+                        A.GaussNoise(std_range=(0.01, 0.04), p = 0.2)
                   ]
-                  self.transform = A.Compose(
-                                    T, 
-                                    bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels'])
-                                    )
+                  self.transform = A.Compose(T)
                   self.contains_spatial = False
 
                   if mlflow.active_run():
@@ -293,7 +290,7 @@ if __name__ == "__main__":
 #  -model yolo11s.pt \
 #  -data_config configs/dataset.yaml \
 #  -train_config configs/train.yaml \
-#  -folds_path data/folds.json \
+#  -folds_path folds.json \
 #  -images_train_dir data/images/train \
 #  -labels_train_dir data/labels/train \
 #  -images_val_dir data/images/val \

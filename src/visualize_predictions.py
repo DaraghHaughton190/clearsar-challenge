@@ -11,16 +11,17 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 
-def load_preds(pred_path: str) -> dict:
+def load_preds(pred_path: str, conf_thresh = 0.05) -> dict:
       with open(pred_path) as f:
             preds = json.load(f)
       result = {}
       for p in preds:
-            img_id = p["image_id"]
-            if img_id not in result:
-                  result[img_id] = []
-            result[img_id].append(p["bbox"])
-      return result
+            if p.get("score", 1) > conf_thresh:
+                  img_id = p["image_id"]
+                  if img_id not in result:
+                        result[img_id] = []
+                  result[img_id].append(p["bbox"])
+            return result
 
 
 def load_gt(ann_path: str) -> dict:
@@ -87,7 +88,7 @@ def main():
       output_dir = Path(args.output_dir)
       output_dir.mkdir(parents=True, exist_ok=True)
 
-      preds = load_preds(args.preds)
+      preds = load_preds(args.preds, conf_thresh=0.05)
       gt = load_gt(args.ann_path)
 
       all_ids = set(preds.keys()) | set(gt.keys())
